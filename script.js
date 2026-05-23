@@ -4,12 +4,18 @@
 const state = {
   current: -1,
   slides: [],
-  audio: null,
+  audio: null,    // narration (per-slide)
+  music: null,    // ambient pad (looping background)
   autoplay: true,
   started: false,
   unlocked: false,
   advanceTimer: null,
+  musicOn: true,
 };
+
+// Music volume levels — narration ducks the pad
+const MUSIC_BASE   = 0.42;   // when no narration
+const MUSIC_DUCKED = 0.16;   // while narration is speaking
 
 function toast(msg, isErr) {
   const t = document.querySelector("#toast");
@@ -267,11 +273,14 @@ function makeAudio() {
   const a = new Audio();
   a.preload = "auto";
   a.crossOrigin = "anonymous";
+  a.addEventListener("play",  () => duckMusic(true));
   a.addEventListener("ended", () => {
+    duckMusic(false);
     if (state.autoplay && state.current < state.slides.length - 1) {
       state.advanceTimer = setTimeout(() => next(), 600);
     }
   });
+  a.addEventListener("pause", () => duckMusic(false));
   a.addEventListener("error", (e) => {
     console.warn("audio error", e, a.src);
     toast("Audio file failed to load", true);
@@ -279,28 +288,58 @@ function makeAudio() {
   return a;
 }
 
+function makeMusic() {
+  const m = new Audio("audio/ambient.mp3");
+  m.preload = "auto";
+  m.loop = true;
+  m.volume = MUSIC_BASE;
+  m.addEventListener("error", (e) => {
+    console.warn("music error", e);
+  });
+  return m;
+}
+
+function duckMusic(speaking) {
+  const m = state.music;
+  if (!m || !state.musicOn) return;
+  const target = speaking ? MUSIC_DUCKED : MUSIC_BASE;
+  // simple fade
+  const start = m.volume;
+  const startT = performance.now();
+  const dur = 600;
+  function step(t) {
+    const e = Math.min(1, (t - startT) / dur);
+    const eased = 1 - Math.pow(1 - e, 3);
+    m.volume = start + (target - start) * eased;
+    if (e < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function toggleMusic() {
+  state.musicOn = !state.musicOn;
+  const m = state.music;
+  if (!m) return;
+  if (state.musicOn) {
+    m.volume = state.audio && !state.audio.paused ? MUSIC_DUCKED : MUSIC_BASE;
+    m.play().catch(() => {});
+  } else {
+    m.pause();
+  }
+  const btn = document.querySelector("#music-btn");
+  if (btn) {
+    btn.classList.toggle("off", !state.musicOn);
+    btn.innerHTML = state.musicOn ? "♪ Music · ON" : "♪ Music · OFF";
+  }
+}
+
 // Unlock audio playback on the first user gesture (browser policy).
 function unlockAudio() {
   if (state.unlocked) return;
-  const a = state.audio;
-  // Brief play+pause of a silent source to prime the audio element
-  const oldSrc = a.src;
-  a.muted = true;
-  a.src = "data:audio/mp3;base64,SUQzAwAAAAAAA1RJVDIAAAAB";
-  const p = a.play();
-  if (p && typeof p.then === "function") {
-    p.then(() => {
-      a.pause();
-      a.muted = false;
-      a.src = oldSrc || "";
-      state.unlocked = true;
-    }).catch(() => {
-      a.muted = false;
-      a.src = oldSrc || "";
-      state.unlocked = true;
-    });
-  } else {
-    state.unlocked = true;
+  state.unlocked = true;
+  // start the ambient music
+  if (state.music && state.musicOn) {
+    state.music.play().catch(err => console.warn("music play blocked", err));
   }
 }
 
@@ -319,6 +358,7 @@ function toggleAutoplay() {
 async function init() {
   state.slides = await loadSlides();
   state.audio = makeAudio();
+  state.music = makeMusic();
   const deck = document.querySelector(".deck");
   state.slides.forEach((s, i) => deck.appendChild(renderSlide(s, i, state.slides.length)));
 
@@ -341,6 +381,9 @@ async function init() {
   });
   document.querySelector("#autoplay-btn").addEventListener("click", () => {
     unlockAudio(); toggleAutoplay();
+  });
+  document.querySelector("#music-btn").addEventListener("click", () => {
+    unlockAudio(); toggleMusic();
   });
 
   // click-to-advance zones
