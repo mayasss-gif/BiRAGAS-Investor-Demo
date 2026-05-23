@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>BiRAGAS · Investor Presentation · Ayass Bioscience · MMXXVI</title>
+  <meta name="description" content="The infrastructure that finally tells biology's actual story. An investor briefing on BiRAGAS — one reasoning engine, twenty-eight causal modules, Causion co-pilot." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@1,9..144,300..700&family=Newsreader:ital,opsz,wght@0,6..72,380..700;1,6..72,380..700&family=DM+Mono:wght@400;500;600&display=swap" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- start gate (autoplay policy + intro) -->
+  <div class="gate">
+    <div class="gate-title">
+      BiRAGAS<em>Demo.</em>
+    </div>
+    <div class="gate-sub">An investor briefing · Ayass Bioscience · MMXXVI</div>
+    <button class="gate-cta" id="start-btn">Begin presentation →</button>
+    <div class="gate-hint">15 slides · ~4 minutes · Use ← → keys or click to navigate</div>
+  </div>
+
+  <!-- 3D stage that holds the slide deck -->
+  <div class="stage">
+    <div class="deck"></div>
+    <!-- click-to-advance overlay (transparent) -->
+    <div class="click-zone left"  id="zone-prev"></div>
+    <div class="click-zone right" id="zone-next"></div>
+  </div>
+
+  <!-- nav bar (always visible at bottom) -->
+  <div class="navbar" id="navbar">
+    <button class="navbtn" id="prev-btn">‹  Prev</button>
+    <button class="navbtn pill" id="autoplay-btn">▶ Auto · ON</button>
+    <div class="nav-counter" id="counter">01 / 15</div>
+    <button class="navbtn" id="restart-btn">⟲</button>
+    <button class="navbtn" id="next-btn">Next  ›</button>
+  </div>
+
+  <!-- toast for audio errors / hints -->
+  <div class="toast" id="toast"></div>
+
+  <!-- brand watermark (top-left) -->
+  <div class="brand-mark"><em>BiRAGAS</em><span class="accent"> ·</span> Ayass Bioscience · MMXXVI</div>
+
+  <!-- Embedded slide data (so the deck works via file:// too) -->
+  <script src="slides-embedded.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
